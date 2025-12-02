@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>일본어 플래시 루프</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app" role="application" aria-label="일본어 플래시카드">
+    <div id="setup-screen">
+      <header>
+        <div>
+          <div class="title">일본어 플래시카드</div>
+          <div class="muted">학습 모드를 선택하고 CSV 파일을 로드하세요.</div>
+        </div>
+      </header>
+      <div class="mode-selector">
+        <button id="mode-jp-roma" class="mode-btn">일본어 → 발음</button>
+        <button id="mode-roma-jp" class="mode-btn">발음 → 일본어</button>
+      </div>
+      <div class="uploader">
+        <label for="file">📄 vocab.csv 선택</label>
+        <input id="file" type="file" accept=".csv,text/csv">
+        <div id="drop" class="drop" title="여기로 vocab.csv를 드래그하세요">⬇︎ 드래그해서 CSV 놓기</div>
+      </div>
+    </div>
+
+    <div id="main-screen" class="hidden">
+      <div id="screen" class="screen" aria-live="polite" aria-atomic="true" title="클릭하여 앞/뒷면 전환 (F)">
+        <div>
+          <div id="display" class="jp"></div>
+          <div id="meaning" class="meaning"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="prev" title="이전(Shift+←)">⟵ 이전</button>
+      <button id="next" title="다음(Shift+→)">다음 ⟶</button>
+      <button id="shuffle" title="셔플(Alt+S)">셔플</button>
+      <button id="toggleMeaning" title="뜻 보이기/숨기기(M)">뜻 표시 토글</button>
+      <button id="restart" class="bad" title="처음부터(R)">처음부터</button>
+      <button id="btnBackToSetup" title="홈 화면으로 돌아가기">🏠 홈으로</button>
+    </div>
+
+    <div class="row" style="grid-template-columns: 1fr auto;">
+      <div class="muted small" id="status">모드를 선택하고 CSV 파일을 로드하세요.</div>
+      <div class="muted small" id="count" style="margin-left:auto">0개</div>
+    </div>
+
+    <footer>
+      CSV 형식: <code>일본어, 로마자(한글), 뜻</code> — 서버 없이 로컬에서 파일 선택/드래그로 동작합니다.
+    </footer>
+  </div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
