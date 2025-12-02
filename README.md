@@ -1,0 +1,2 @@
+# japanese
+japanese words study
