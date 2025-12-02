@@ -28,8 +28,8 @@ header{display:flex; align-items:center; justify-content:space-between; gap:12px
   border:2px dashed rgba(148,163,184,.35); border-radius:14px; padding:10px 12px; margin-left:auto; display:flex; gap:8px; align-items:center;
 }
 .drop.drag{ background: rgba(34,211,238,.08); border-color: var(--accent); }
-.jp{font-size: clamp(42px, 7vw, 96px); font-weight:800; letter-spacing: .02em}
-.romaji{font-size: clamp(26px, 4.8vw, 56px); font-weight:700; color:#a5f3fc}
+.chi{font-size: clamp(42px, 7vw, 96px); font-weight:800; letter-spacing: .02em}
+.jp{font-size: clamp(26px, 4.8vw, 56px); font-weight:700; color:#a5f3fc}
 .meaning{font-size: clamp(14px, 2.2vw, 20px); color:var(--muted); margin-top:8px}
 .controls{display:flex; gap:10px; flex-wrap:wrap; margin-top:18px}
 button{

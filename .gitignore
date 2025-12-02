@@ -4,6 +4,9 @@
 # data files
 *.csv
 
+# test files
+*.ipynb
+
 ### Windows ###
 # Windows thumbnail cache files
 Thumbs.db

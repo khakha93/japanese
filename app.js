@@ -1,14 +1,19 @@
 (() => {
   let rows = [];  // [{jp, roma, meaning}]
   let idx = 0;
-  let studyMode = null; // 'jp-to-roma' or 'roma-to-jp'
+  let studyMode = 'jp-to-roma'; // 'jp-to-roma' or 'roma-to-jp'
   let showMeaning = false;
-  let isFlipped = false; // 카드가 뒤집혔는지 (로마자 표시)
+  let flipState = 0; // 0: front, 1: middle, 2: back
 
   // Speech Synthesis API 초기화
   const synth = window.speechSynthesis;
-  let utterance = new SpeechSynthesisUtterance();
-  utterance.lang = 'ja-JP'; // 일본어 설정
+  let voicesLoaded = false;
+  // 음성 목록이 로드되면 플래그를 설정합니다.
+  synth.onvoiceschanged = () => {
+    voicesLoaded = true;
+  };
+  // 일부 브라우저에서는 onvoiceschanged가 발생하지 않을 수 있으므로 미리 호출합니다.
+  synth.getVoices();
 
   // UI Elements
   const $setupScreen = document.getElementById('setup-screen');
@@ -39,8 +44,20 @@
     if (synth.speaking) {
       synth.cancel(); // 현재 재생 중인 음성이 있다면 중단
     }
-    utterance.text = text;
-    synth.speak(utterance);
+
+    const speakNow = () => {
+      const newUtterance = new SpeechSynthesisUtterance(text);
+      newUtterance.lang = 'ja-JP'; // 일본어 설정
+      synth.speak(newUtterance);
+    };
+
+    // 음성 목록이 로드될 때까지 잠시 기다리거나, 이미 로드되었다면 바로 실행합니다.
+    if (voicesLoaded) {
+      speakNow();
+    } else {
+      // 첫 재생 시 음성 엔진 준비를 위해 약간의 지연을 줍니다.
+      setTimeout(speakNow, 100);
+    }
   }
 
   function parseCSV(text){
@@ -63,86 +80,101 @@
       }
       cells.push(cur);
       // id, jp, roma, meaning 순서
-      const [id, jp='', roma='', meaning=''] = cells.map(c => c.trim());
-      if (jp) { out.push({jp, roma, meaning}); }
+      const [id, chi='', jp='', ko=''] = cells.map(c => c.trim());
+      if (jp) { out.push({chi, jp, meaning: ko}); }
     }
     return out;
   }
 
+  function renderCHI(){
+    const row = rows[idx] || {};
+    $display.className = 'chi';
+    $display.textContent = row.chi || 'CSV를 선택하세요';
+    updateMeta();
+  }
+  
   function renderJP(){
     const row = rows[idx] || {};
     $display.className = 'jp';
-    $display.textContent = row.jp || 'CSV를 선택하세요';
-    $meaning.textContent = showMeaning ? (row.meaning || '') : '';
+    $display.textContent = row.jp || (row.ko ? '...' : 'CSV를 선택하세요');
     updateMeta();
     // 발음은 앞면이 일본어일 때만 재생
-    if (row.jp) { // 일본어 텍스트가 있을 때만 발음
+    if (row.jp) {
       speakJapanese(row.jp);
     }
   }
-  function renderRoma(){
+
+  function renderKO(){
     const row = rows[idx] || {};
-    $display.className = 'romaji';
-    $display.textContent = row.roma || (row.jp ? '...' : 'CSV를 선택하세요');
-    $meaning.textContent = showMeaning ? (row.meaning || '') : '';
+    $display.className = 'jp';
+    $display.textContent = row.meaning || '...';
     updateMeta();
   }
 
-  function renderFront() {
-    isFlipped = false;
-    if (studyMode === 'jp-to-roma') {
-      renderJP();
-    } else {
-      renderRoma();
-    }
-  }
-
-  function renderBack() {
-    isFlipped = true;
-    if (studyMode === 'jp-to-roma') {
-      renderRoma();
-    } else {
-      renderJP();
-    }
-  }
-
   function flipCard() {
-    if (!rows.length) return;
-    isFlipped ? renderFront() : renderBack();
+    if (!rows.length) return; // 데이터가 없으면 실행하지 않음
+
+    if (flipState === 2) { // 3번째 면에 있다면, 다음 단어로 넘어갑니다.
+      nextRow();
+    } else {
+      flipState++; // 1번째 또는 2번째 면으로 상태를 변경합니다.
+      if (flipState === 1) { // 1번째 뒤집기 -> 2번째 면
+        renderJP();
+        setStatus('2번째 면');
+      } else { // 2번째 뒤집기 -> 3번째 면
+        if (studyMode === 'jp-to-roma') renderKO();
+        else renderCHI();
+        setStatus('3번째 면');
+      }
+    }
   }
 
   function nextRow(){
     if (!rows.length) return;
-    // 카드가 뒤집혀 있으면, 다음 단어의 앞면을 보여줍니다.
-    if (isFlipped) {
-      idx = (idx + 1) % rows.length;
-      renderFront();
-      setStatus('다음 단어');
-    } else {
-      // 카드가 앞면이면, 뒷면을 보여줍니다.
-      renderBack();
-      setStatus('뒷면 보기');
-    }
+    idx = (idx + 1) % rows.length;
+    flipState = 0; // 첫 면으로 초기화
+    if (studyMode === 'jp-to-roma') renderCHI();
+    else if (studyMode === 'roma-to-jp') renderKO();
+    // 기본값 또는 오류 상황에서는 'jp-to-roma' 모드와 동일하게 처리
+    else renderCHI();
+    setStatus('다음 단어');
   }
+
   function prevRow(){
     if (!rows.length) return;
     idx = (idx - 1 + rows.length) % rows.length;
-    renderFront();
+    flipState = 0; // 첫 면으로 초기화
+    if (studyMode === 'jp-to-roma') renderCHI();
+    else if (studyMode === 'roma-to-jp') renderKO();
+    // 기본값 또는 오류 상황에서는 'jp-to-roma' 모드와 동일하게 처리
+    else renderCHI();
     setStatus('이전');
+    const row = rows[idx] || {};
+    $meaning.textContent = showMeaning ? (row.meaning || '') : '';
   }
+
+  function warmUpSpeechEngine() {
+    const warmUpUtterance = new SpeechSynthesisUtterance(' ');
+    warmUpUtterance.volume = 0; // 소리가 들리지 않도록 볼륨을 0으로 설정
+    synth.speak(warmUpUtterance);
+  }
+
   function shuffleRows(){
     if (!rows.length) return;
     for (let i = rows.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [rows[i], rows[j]] = [rows[j], rows[i]];
     }
-    idx = 0;
-    renderFront();
+    restart(); // 셔플 후 처음으로 이동
     setStatus('셔플 완료');
   }
   function restart(){
     idx = 0;
-    renderFront();
+    flipState = 0;
+    if (studyMode === 'jp-to-roma') renderCHI();
+    else if (studyMode === 'roma-to-jp') renderKO();
+    // 기본값 또는 오류 상황에서는 'jp-to-roma' 모드와 동일하게 처리
+    else renderCHI();
     setStatus('처음으로 이동');
   }
 
@@ -153,12 +185,12 @@
     // 상태 초기화
     rows = [];
     idx = 0;
-    studyMode = null;
+    studyMode = 'jp-to-roma';
     showMeaning = false;
-    isFlipped = false;
-    $btnModeJpRoma.classList.remove('selected');
+    flipState = 0;
+    $btnModeJpRoma.classList.add('selected');
     $btnModeRomaJp.classList.remove('selected');
-    setStatus('학습 모드를 선택하고 CSV 파일을 로드하세요.');
+    setStatus('모드 선택됨: 일본어 → 발음. CSV 파일을 로드하세요.');
   }
 
   // CSV 파일 읽기 (파일 선택/드래그)
@@ -176,7 +208,11 @@
         idx = 0;
         $setupScreen.classList.add('hidden');
         $mainScreen.classList.remove('hidden');
-        renderFront();
+        flipState = 0;
+        if (studyMode === 'jp-to-roma') renderCHI();
+        else if (studyMode === 'roma-to-jp') renderKO();
+        // 기본값 또는 오류 상황에서는 'jp-to-roma' 모드와 동일하게 처리
+        else renderCHI();
         setStatus(`로드 완료: ${file.name}`);
       } catch(err) {
         $display.className = 'romaji';
@@ -202,7 +238,7 @@
     studyMode = 'roma-to-jp';
     $btnModeRomaJp.classList.add('selected');
     $btnModeJpRoma.classList.remove('selected');
-    setStatus('모드 선택됨: 발음 → 일본어');
+    setStatus('모드 선택됨: 한국어 → 일본어');
   });
   $btnNext.addEventListener('click', nextRow);
   $btnPrev.addEventListener('click', prevRow);
@@ -217,8 +253,8 @@
   });
 
   window.addEventListener('keydown', (e) => {
-    if (e.shiftKey && e.key === 'ArrowRight') { e.preventDefault(); nextRow(); }
-    else if (e.shiftKey && e.key === 'ArrowLeft') { e.preventDefault(); prevRow(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); nextRow(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prevRow(); }
     else if (e.key.toLowerCase() === 'f') { e.preventDefault(); flipCard(); }
     else if (e.key.toLowerCase() === 'm') { e.preventDefault(); $btnToggleMeaning.click(); }
     else if (e.key.toLowerCase() === 'r') { e.preventDefault(); restart(); }
@@ -237,5 +273,9 @@
   });
 
   // 초기 상태
-  setStatus('학습 모드를 선택하고 CSV 파일을 로드하세요.');
+  $btnModeJpRoma.classList.add('selected');
+  setStatus('모드 선택됨: 일본어 → 발음. CSV 파일을 로드하세요.');
+
+  // 첫 발음 잘림 현상을 방지하기 위해 음성 엔진을 미리 활성화합니다.
+  warmUpSpeechEngine();
 })();
