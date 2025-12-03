@@ -2,7 +2,7 @@
   let rows = [];  // [{jp, roma, meaning}]
   let idx = 0;
   let studyMode = 'jp-to-roma'; // 'jp-to-roma' or 'roma-to-jp'
-  let showMeaning = false;
+  let showMeaning = true;
   let flipState = 0; // 0: front, 1: middle, 2: back
 
   // Speech Synthesis API 초기화
@@ -18,7 +18,7 @@
   // UI Elements
   const $setupScreen = document.getElementById('setup-screen');
   const $mainScreen = document.getElementById('main-screen');
-  const $btnModeJpRoma = document.getElementById('mode-jp-roma');
+  const $btnModeChiKo = document.getElementById('mode-chi-ko');
   const $btnModeRomaJp = document.getElementById('mode-roma-jp');
   const $display = document.getElementById('display');
   const $meaning = document.getElementById('meaning');
@@ -92,17 +92,21 @@
     $display.className = 'chi';
     $display.textContent = row.chi || 'CSV를 선택하세요';
     updateMeta();
+    // CHI 면에서는 보조 의미(한글)를 표시하지 않습니다.
+    $meaning.textContent = '';
   }
   
   function renderJP(){
     const row = rows[idx] || {};
     $display.className = 'jp';
-    $display.textContent = row.jp || (row.ko ? '...' : 'CSV를 선택하세요');
+    $display.textContent = row.jp || (row.meaning ? '...' : 'CSV를 선택하세요');
     updateMeta();
     // 발음은 앞면이 일본어일 때만 재생
     if (row.jp) {
       speakJapanese(row.jp);
     }
+    // 의미 표시 토글이 켜져 있으면 일본어와 함께 한글 뜻을 보여줍니다.
+    $meaning.textContent = showMeaning ? (row.meaning || '') : '';
   }
 
   function renderKO(){
@@ -110,6 +114,8 @@
     $display.className = 'jp';
     $display.textContent = row.meaning || '...';
     updateMeta();
+    // KO(단독) 면에서는 보조 의미 영역을 비웁니다.
+    $meaning.textContent = '';
   }
 
   function flipCard() {
@@ -118,14 +124,21 @@
     if (flipState === 2) { // 3번째 면에 있다면, 다음 단어로 넘어갑니다.
       nextRow();
     } else {
-      flipState++; // 1번째 또는 2번째 면으로 상태를 변경합니다.
-      if (flipState === 1) { // 1번째 뒤집기 -> 2번째 면
+      // 다음 면으로 이동
+      flipState++;
+      if (flipState === 1) { // 1번째 뒤집기 -> 2번째 면 (일본어)
         renderJP();
         setStatus('2번째 면');
-      } else { // 2번째 뒤집기 -> 3번째 면
-        if (studyMode === 'jp-to-roma') renderKO();
-        else renderCHI();
-        setStatus('3번째 면');
+      } else { // 2번째 뒤집기 -> 3번째 면(원래 한글 뜻) 또는 건너뛰기
+        // 만약 의미 토글이 켜져 있고 jp-to-roma 모드라면
+        // 3번째 면(단독 한글)을 보여주지 않고 다음 단어로 넘어갑니다.
+        if (showMeaning && studyMode === 'jp-to-roma') {
+          nextRow();
+        } else {
+          if (studyMode === 'jp-to-roma') renderKO();
+          else renderCHI();
+          setStatus('3번째 면');
+        }
       }
     }
   }
@@ -187,9 +200,9 @@
     rows = [];
     idx = 0;
     studyMode = 'jp-to-roma';
-    showMeaning = false;
+    showMeaning = true;
     flipState = 0;
-    $btnModeJpRoma.classList.add('selected');
+    $btnModeChiKo.classList.add('selected');
     $btnModeRomaJp.classList.remove('selected');
     setStatus('모드 선택됨: 일본어 → 발음. CSV 파일을 로드하세요.');
   }
@@ -229,16 +242,16 @@
   }
 
   // 이벤트
-  $btnModeJpRoma.addEventListener('click', () => {
+  $btnModeChiKo.addEventListener('click', () => {
     studyMode = 'jp-to-roma';
-    $btnModeJpRoma.classList.add('selected');
+    $btnModeChiKo.classList.add('selected');
     $btnModeRomaJp.classList.remove('selected');
     setStatus('모드 선택됨: 일본어 → 발음');
   });
   $btnModeRomaJp.addEventListener('click', () => {
     studyMode = 'roma-to-jp';
     $btnModeRomaJp.classList.add('selected');
-    $btnModeJpRoma.classList.remove('selected');
+    $btnModeChiKo.classList.remove('selected');
     setStatus('모드 선택됨: 한국어 → 일본어');
   });
   $btnNext.addEventListener('click', nextRow);
@@ -249,9 +262,24 @@
   $screen.addEventListener('click', flipCard);
   $btnBackToSetup.addEventListener('click', backToSetup);
   $btnToggleMeaning.addEventListener('click', () => {
+    // 토글 상태를 변경하고, 현재 보고 있는 면을 재렌더링합니다.
     showMeaning = !showMeaning;
-    const row = rows[idx] || {};
-    $meaning.textContent = showMeaning ? (row.meaning || '') : '';
+    // 현재 면에 맞춰 즉시 반영합니다. KO 면(3번째)을 보고 있다가
+    // 의미 토글을 켜면 JP 면으로 이동하여 일본어+한글을 보여줍니다.
+    if (flipState === 0) {
+      renderCHI();
+    } else if (flipState === 1) {
+      renderJP();
+    } else if (flipState === 2) {
+      if (showMeaning && studyMode === 'jp-to-roma') {
+        // KO를 대신해 JP(+뜻)로 돌아가게끔 상태를 조정합니다.
+        flipState = 1;
+        renderJP();
+      } else {
+        // 토글이 꺼지거나 다른 모드면 기존 KO를 유지
+        renderKO();
+      }
+    }
   });
 
   window.addEventListener('keydown', (e) => {
@@ -275,7 +303,7 @@
   });
 
   // 초기 상태
-  $btnModeJpRoma.classList.add('selected');
+  $btnModeChiKo.classList.add('selected');
   setStatus('모드 선택됨: 일본어 → 발음. CSV 파일을 로드하세요.');
 
   // 첫 발음 잘림 현상을 방지하기 위해 음성 엔진을 미리 활성화합니다.
