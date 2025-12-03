@@ -3,6 +3,7 @@
   let idx = 0;
   let studyMode = 'jp-to-roma'; // 'jp-to-roma' or 'roma-to-jp'
   let showMeaning = true;
+  let speakEnabled = false;
   let flipState = 0; // 0: front, 1: middle, 2: back
 
   // Speech Synthesis API 초기화
@@ -20,6 +21,7 @@
   const $mainScreen = document.getElementById('main-screen');
   const $btnModeChiKo = document.getElementById('mode-chi-ko');
   const $btnModeRomaJp = document.getElementById('mode-roma-jp');
+  const $btnToggleSpeech = document.getElementById('toggleSpeech');
   const $display = document.getElementById('display');
   const $meaning = document.getElementById('meaning');
   const $count = document.getElementById('count');
@@ -42,6 +44,7 @@
   function setStatus(text){ $status.textContent = text; }
 
   function speakJapanese(text) {
+    if (!speakEnabled) return;
     if (synth.speaking) {
       synth.cancel(); // 현재 재생 중인 음성이 있다면 중단
     }
@@ -281,6 +284,17 @@
       }
     }
   });
+
+  // 음성 on/off 토글
+  if ($btnToggleSpeech) {
+    $btnToggleSpeech.addEventListener('click', () => {
+      speakEnabled = !speakEnabled;
+      $btnToggleSpeech.textContent = speakEnabled ? '🔊' : '🔇';
+      setStatus(speakEnabled ? '음성 켜짐' : '음성 꺼짐');
+    });
+    // 초기 버튼 표시
+    $btnToggleSpeech.textContent = speakEnabled ? '🔊' : '🔇';
+  }
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') { e.preventDefault(); nextRow(); }
