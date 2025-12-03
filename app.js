@@ -1,7 +1,7 @@
 (() => {
-  let rows = [];  // [{jp, roma, meaning}]
+  let rows = [];  // [{chi, jp, ko}]
   let idx = 0;
-  let studyMode = 'jp-to-roma'; // 'jp-to-roma' or 'roma-to-jp'
+  let studyMode = 'chi-to-ko'; // 'chi-to-ko' or 'roma-to-jp'
   let showMeaning = true;
   let speakEnabled = false;
   let flipState = 0; // 0: front, 1: middle, 2: back
@@ -133,12 +133,12 @@
         renderJP();
         setStatus('2번째 면');
       } else { // 2번째 뒤집기 -> 3번째 면(원래 한글 뜻) 또는 건너뛰기
-        // 만약 의미 토글이 켜져 있고 jp-to-roma 모드라면
+        // 만약 의미 토글이 켜져 있고 chi-to-ko 모드라면
         // 3번째 면(단독 한글)을 보여주지 않고 다음 단어로 넘어갑니다.
-        if (showMeaning && studyMode === 'jp-to-roma') {
+        if (showMeaning && studyMode === 'chi-to-ko') {
           nextRow();
         } else {
-          if (studyMode === 'jp-to-roma') renderKO();
+          if (studyMode === 'chi-to-ko') renderKO();
           else renderCHI();
           setStatus('3번째 면');
         }
@@ -150,9 +150,9 @@
     if (!rows.length) return;
     idx = (idx + 1) % rows.length;
     flipState = 0; // 첫 면으로 초기화
-    if (studyMode === 'jp-to-roma') renderCHI();
+    if (studyMode === 'chi-to-ko') renderCHI();
     else if (studyMode === 'roma-to-jp') renderKO();
-    // 기본값 또는 오류 상황에서는 'jp-to-roma' 모드와 동일하게 처리
+    // 기본값 또는 오류 상황에서는 'chi-to-ko' 모드와 동일하게 처리
     else renderCHI();
     setStatus('다음 단어');
   }
@@ -161,9 +161,9 @@
     if (!rows.length) return;
     idx = (idx - 1 + rows.length) % rows.length;
     flipState = 0; // 첫 면으로 초기화
-    if (studyMode === 'jp-to-roma') renderCHI();
+    if (studyMode === 'chi-to-ko') renderCHI();
     else if (studyMode === 'roma-to-jp') renderKO();
-    // 기본값 또는 오류 상황에서는 'jp-to-roma' 모드와 동일하게 처리
+    // 기본값 또는 오류 상황에서는 'chi-to-ko' 모드와 동일하게 처리
     else renderCHI();
     setStatus('이전');
     const row = rows[idx] || {};
@@ -188,9 +188,9 @@
   function restart(){
     idx = 0;
     flipState = 0;
-    if (studyMode === 'jp-to-roma') renderCHI();
+    if (studyMode === 'chi-to-ko') renderCHI();
     else if (studyMode === 'roma-to-jp') renderKO();
-    // 기본값 또는 오류 상황에서는 'jp-to-roma' 모드와 동일하게 처리
+    // 기본값 또는 오류 상황에서는 'chi-to-ko' 모드와 동일하게 처리
     else renderCHI();
     setStatus('처음으로 이동');
   }
@@ -202,7 +202,7 @@
     // 상태 초기화
     rows = [];
     idx = 0;
-    studyMode = 'jp-to-roma';
+    studyMode = 'chi-to-ko';
     showMeaning = true;
     flipState = 0;
     $btnModeChiKo.classList.add('selected');
@@ -226,9 +226,9 @@
         $setupScreen.classList.add('hidden');
         $mainScreen.classList.remove('hidden');
         flipState = 0;
-        if (studyMode === 'jp-to-roma') renderCHI();
+        if (studyMode === 'chi-to-ko') renderCHI();
         else if (studyMode === 'roma-to-jp') renderKO();
-        // 기본값 또는 오류 상황에서는 'jp-to-roma' 모드와 동일하게 처리
+        // 기본값 또는 오류 상황에서는 'chi-to-ko' 모드와 동일하게 처리
         else renderCHI();
         setStatus(`로드 완료: ${file.name}`);
       } catch(err) {
@@ -246,7 +246,7 @@
 
   // 이벤트
   $btnModeChiKo.addEventListener('click', () => {
-    studyMode = 'jp-to-roma';
+    studyMode = 'chi-to-ko';
     $btnModeChiKo.classList.add('selected');
     $btnModeRomaJp.classList.remove('selected');
     setStatus('모드 선택됨: 일본어 → 발음');
@@ -274,7 +274,7 @@
     } else if (flipState === 1) {
       renderJP();
     } else if (flipState === 2) {
-      if (showMeaning && studyMode === 'jp-to-roma') {
+      if (showMeaning && studyMode === 'chi-to-ko') {
         // KO를 대신해 JP(+뜻)로 돌아가게끔 상태를 조정합니다.
         flipState = 1;
         renderJP();
