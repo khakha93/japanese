@@ -27,6 +27,7 @@
   const $screen = document.getElementById('screen');
   const $btnPrev = document.getElementById('prev');
   const $btnNext = document.getElementById('next');
+  const $btnFlip = document.getElementById('flip');
   const $btnShuffle = document.getElementById('shuffle');
   const $btnToggleMeaning = document.getElementById('toggleMeaning');
   const $btnRestart = document.getElementById('restart');
@@ -242,6 +243,7 @@
   });
   $btnNext.addEventListener('click', nextRow);
   $btnPrev.addEventListener('click', prevRow);
+  $btnFlip.addEventListener('click', flipCard);
   $btnShuffle.addEventListener('click', shuffleRows);
   $btnRestart.addEventListener('click', restart);
   $screen.addEventListener('click', flipCard);
