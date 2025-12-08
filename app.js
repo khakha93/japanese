@@ -45,23 +45,22 @@
 
   function speakJapanese(text) {
     if (!speakEnabled) return;
-    if (synth.speaking) {
-      synth.cancel(); // 현재 재생 중인 음성이 있다면 중단
-    }
+    // 진행 중인 다른 발화가 있다면 모두 취소하여 현재 단어에 집중합니다.
+    synth.cancel();
 
-    const speakNow = () => {
-      const newUtterance = new SpeechSynthesisUtterance(text);
-      newUtterance.lang = 'ja-JP'; // 일본어 설정
-      synth.speak(newUtterance);
-    };
+    // 1. 엔진을 깨우기 위한 아주 짧은 무음 발화를 생성합니다.
+    //    볼륨을 0으로, 재생 속도를 최대로 하여 사용자에게는 인지되지 않게 합니다.
+    const silence = new SpeechSynthesisUtterance(' ');
+    silence.volume = 0;
+    silence.rate = 5; // 가능한 한 빨리 끝나도록 재생 속도를 높입니다.
 
-    // 음성 목록이 로드될 때까지 잠시 기다리거나, 이미 로드되었다면 바로 실행합니다.
-    if (voicesLoaded) {
-      speakNow();
-    } else {
-      // 첫 재생 시 음성 엔진 준비를 위해 약간의 지연을 줍니다.
-      setTimeout(speakNow, 100);
-    }
+    // 2. 실제 일본어 단어 발화를 생성합니다.
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ja-JP';
+
+    // 3. 무음 발화를 먼저 큐에 넣고, 그 다음에 실제 단어 발화를 넣습니다.
+    synth.speak(silence);
+    synth.speak(utterance);
   }
 
   function parseCSV(text){
@@ -168,12 +167,6 @@
     setStatus('이전');
     const row = rows[idx] || {};
     $meaning.textContent = showMeaning ? (row.meaning || '') : '';
-  }
-
-  function warmUpSpeechEngine() {
-    const warmUpUtterance = new SpeechSynthesisUtterance(' ');
-    warmUpUtterance.volume = 0; // 소리가 들리지 않도록 볼륨을 0으로 설정
-    synth.speak(warmUpUtterance);
   }
 
   function shuffleRows(){
@@ -319,7 +312,4 @@
   // 초기 상태
   $btnModeChiKo.classList.add('selected');
   setStatus('모드 선택됨: 일본어 → 발음. CSV 파일을 로드하세요.');
-
-  // 첫 발음 잘림 현상을 방지하기 위해 음성 엔진을 미리 활성화합니다.
-  warmUpSpeechEngine();
 })();
