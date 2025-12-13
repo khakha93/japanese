@@ -38,6 +38,24 @@
   const $drop = document.getElementById('drop');
   const $gdriveLink = document.getElementById('gdrive-link');
   const $loadGdrive = document.getElementById('load-gdrive');
+  const $presetLinksNouns = document.getElementById('preset-links-nouns');
+  const $presetLinksVerbs = document.getElementById('preset-links-verbs');
+  const $presetLinksOthers = document.getElementById('preset-links-others');
+
+  const PRESET_LINKS = [
+    { name: '명사1', url: 'https://docs.google.com/spreadsheets/d/1cTZQmCgAJFnVQ_DgiWKa0vA8NtWwRojRQXIf22LV5Zg/edit?usp=sharing' },
+    { name: '명사2', url: 'https://docs.google.com/spreadsheets/d/1AMs85laaL4lJDdJ8Z-infGGHO7dwKvPlpAY6uk97NKA/edit?usp=sharing' },
+    { name: '명사3', url: 'https://docs.google.com/spreadsheets/d/1-6akb4lf3chWnTAri2-50AzPH0HPlSTPXVFRpoPGWy0/edit?usp=sharing' },
+    { name: '명사_날짜', url: 'https://docs.google.com/spreadsheets/d/1ARVcSUEkR9VRLblRIkKbjytiXCDpHvVMHOGXCXevDmU/edit?usp=sharing' },
+    { name: '명사_요일', url: 'https://docs.google.com/spreadsheets/d/1TVYUXQZLNrRr4ccGlivQOqV2EtL4_NnByb1ZYGB0XpI/edit?usp=sharing' },
+    { name: '동사_1류', url: 'https://docs.google.com/spreadsheets/d/11CR0gz71xIwa0K4NqdgyP2ekHg5DT3xvq0oEb69OX1E/edit?usp=sharing' },
+    { name: '동사_2류', url: 'https://docs.google.com/spreadsheets/d/1Q6G3qvfq2ZStlJli-oqwK_zvUQRkKFAsDsBitHfZ40w/edit?gid=2000080473#gid=2000080473' },
+    { name: '동사_3류', url: 'https://docs.google.com/spreadsheets/d/1NPhR8mBD_WbZw15DAzO80-nmVbMWg6Lk8vj5IejV6dU/edit?usp=sharing' },
+    { name: '형용사_나', url: 'https://docs.google.com/spreadsheets/d/1K-j8bEq_bS0XdXd4RmUsz44J7DvhfeqxAJPnWA4x30c/edit?usp=sharing' },
+    { name: '형용사_이', url: 'https://docs.google.com/spreadsheets/d/1oSMX3nf-DNdBNvfdej-_I10vs9kkDCTYdQizVkpbmzE/edit?usp=sharing' },
+    { name: '부사', url: 'https://docs.google.com/spreadsheets/d/1Gh-2H-lXDO6AxQrnU0TcD5OdFfdszNuN1Y_lfAspRcE/edit?usp=sharing' },
+    { name: '접미어', url: 'https://docs.google.com/spreadsheets/d/1KadarHFDeSGzjwS_oOx4v8sg-F47RjWaIQnwq7n1Vuo/edit?usp=sharing' },
+  ];
   
   function updateMeta(){
     $count.textContent = rows.length ? `${idx + 1} / ${rows.length}개` : '0개';
@@ -285,6 +303,33 @@
     }
   }
 
+  function renderPresetLinks() {
+    const container = document.querySelector('.preset-links');
+
+    PRESET_LINKS.forEach(link => {
+      const button = document.createElement('button');
+      button.textContent = link.name;
+      button.dataset.url = link.url;
+
+      if (link.name.startsWith('명사')) {
+        $presetLinksNouns.appendChild(button);
+      } else if (link.name.startsWith('동사')) {
+        $presetLinksVerbs.appendChild(button);
+      } else {
+        $presetLinksOthers.appendChild(button);
+      }
+    });
+
+    container.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON' && e.target.dataset.url) {
+        const url = e.target.dataset.url;
+        // 링크 입력창에 선택한 URL을 채워주고 바로 로드 실행
+        $gdriveLink.value = url;
+        loadCSVFromGdrive();
+      }
+    });
+  }
+
   // 이벤트
   $btnModeChiKo.addEventListener('click', () => {
     studyMode = 'chi-to-ko';
@@ -364,6 +409,7 @@
   });
 
   // 초기 상태
+  renderPresetLinks();
   $btnModeChiKo.classList.add('selected');
   setStatus('모드 선택됨: 일본어 → 발음. CSV 파일을 로드하세요.');
 })();
