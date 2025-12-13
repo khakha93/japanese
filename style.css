@@ -59,3 +59,26 @@ label[for="file"]{cursor:pointer; padding:8px 12px; border-radius:10px; border:1
   color: var(--bg);
   border-color: var(--accent);
 }
+.preset-links-container {
+  margin-bottom: 20px;
+}
+.preset-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.preset-links-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.preset-links-row button {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.gdrive-loader input[type="url"] {
+  background: #0f172a;
+  border: 1px solid rgba(148,163,184,.35);
+  color: var(--txt);
+  border-radius: 8px;
+}

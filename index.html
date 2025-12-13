@@ -24,6 +24,19 @@
         <input id="file" type="file" accept=".csv,text/csv">
         <div id="drop" class="drop" title="여기로 vocab.csv를 드래그하세요">⬇︎ 드래그해서 CSV 놓기</div>
       </div>
+      <div class="or-separator" style="text-align: center; margin: 1em 0; color: #888;">또는</div>
+      <div class="gdrive-loader">
+        <input id="gdrive-link" type="url" placeholder="Google Drive/Sheets 공유 링크 붙여넣기" style="width: 100%; box-sizing: border-box; padding: 0.5em;" title="Google Drive/Sheets 공유 링크">
+        <button id="load-gdrive" style="width: 100%; margin-top: 0.5em; padding: 0.7em 0;">링크에서 불러오기</button>
+      </div>
+      <div class="preset-links-container" style="margin-top: 20px;">
+        <div class="muted small" style="margin-bottom: 8px;">또는, 아래 목록에서 선택하세요:</div>
+        <div class="preset-links">
+          <div id="preset-links-nouns" class="preset-links-row"></div>
+          <div id="preset-links-verbs" class="preset-links-row"></div>
+          <div id="preset-links-others" class="preset-links-row"></div>
+        </div>
+      </div>
     </div>
 
     <div id="main-screen" class="hidden">
