@@ -384,12 +384,15 @@
   }
 
   window.addEventListener('keydown', (e) => {
+    // 학습 화면이 아닐 때는 단축키가 동작하지 않도록 막습니다.
+    if ($mainScreen.classList.contains('hidden')) return;
+
     if (e.key === 'ArrowRight') { e.preventDefault(); nextRow(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); prevRow(); }
     else if (e.key.toLowerCase() === 'f') { e.preventDefault(); flipCard(); }
     else if (e.key.toLowerCase() === 'm') { e.preventDefault(); $btnToggleMeaning.click(); }
     else if (e.key.toLowerCase() === 'r') { e.preventDefault(); restart(); }
-    else if (e.altKey && (e.key.toLowerCase() === 's')) { e.preventDefault(); shuffleRows(); }
+    else if (e.altKey && (e.key.toLowerCase() === 's')) { e.preventDefault(); $btnShuffle.click(); }
   });
 
   // 파일 선택
