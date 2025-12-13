@@ -36,6 +36,8 @@
   const $btnBackToSetup = document.getElementById('btnBackToSetup');
   const $file = document.getElementById('file');
   const $drop = document.getElementById('drop');
+  const $gdriveLink = document.getElementById('gdrive-link');
+  const $loadGdrive = document.getElementById('load-gdrive');
   
   function updateMeta(){
     $count.textContent = rows.length ? `${idx + 1} / ${rows.length}개` : '0개';
@@ -203,38 +205,84 @@
     setStatus('모드 선택됨: 일본어 → 발음. CSV 파일을 로드하세요.');
   }
 
+  /**
+   * CSV 텍스트 데이터를 파싱하고 학습 화면을 설정합니다.
+   * @param {string} csvText - CSV 파일의 전체 텍스트.
+   * @param {string} sourceName - 데이터 출처 (예: 파일명 또는 'Google Drive').
+   */
+  function processAndStart(csvText, sourceName) {
+    try {
+      rows = parseCSV(csvText);
+      if (!rows.length) throw new Error('CSV에 유효한 행이 없습니다.');
+      idx = 0;
+      $setupScreen.classList.add('hidden');
+      $mainScreen.classList.remove('hidden');
+      flipState = 0;
+      if (studyMode === 'chi-to-ko') renderCHI();
+      else if (studyMode === 'roma-to-jp') renderKO();
+      else renderCHI(); // 기본값
+      setStatus(`로드 완료: ${sourceName}`);
+    } catch(err) {
+      $display.className = 'romaji';
+      $display.textContent = 'CSV 파싱 실패';
+      $meaning.textContent = String(err.message || err);
+      setStatus('오류');
+    }
+  }
+
   // CSV 파일 읽기 (파일 선택/드래그)
   function loadCSVFile(file){
     if (!file) return;
-    if (!studyMode) {
-      setStatus('오류: 학습 모드를 먼저 선택하세요.');
-      return;
-    }
     const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        rows = parseCSV(reader.result);
-        if (!rows.length) throw new Error('CSV에 유효한 행이 없습니다.');
-        idx = 0;
-        $setupScreen.classList.add('hidden');
-        $mainScreen.classList.remove('hidden');
-        flipState = 0;
-        if (studyMode === 'chi-to-ko') renderCHI();
-        else if (studyMode === 'roma-to-jp') renderKO();
-        // 기본값 또는 오류 상황에서는 'chi-to-ko' 모드와 동일하게 처리
-        else renderCHI();
-        setStatus(`로드 완료: ${file.name}`);
-      } catch(err) {
-        $display.className = 'romaji';
-        $display.textContent = 'CSV 파싱 실패';
-        $meaning.textContent = String(err.message || err);
-        setStatus('오류');
-      }
-    };
+    reader.onload = () => processAndStart(reader.result, file.name);
     reader.onerror = () => {
       setStatus('파일 읽기 실패');
     };
     reader.readAsText(file, 'utf-8');
+  }
+
+  /**
+   * Google Drive 공유 링크를 직접 다운로드 URL로 변환합니다.
+   * @param {string} url - Google Drive 공유 링크
+   * @returns {string|null} 변환된 다운로드 URL 또는 null
+   */
+  function convertGoogleDriveLink(url) {
+    // 1. Google Drive 파일 링크 (e.g., .csv 파일)
+    const driveRegex = /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+    let match = url.match(driveRegex);
+    if (match && match[1]) {
+      return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+    }
+
+    // 2. Google Sheets 문서 링크
+    const sheetRegex = /https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/;
+    match = url.match(sheetRegex);
+    if (match && match[1]) {
+      const fileId = match[1];
+      const gidRegex = /[#&]gid=(\d+)/;
+      const gidMatch = url.match(gidRegex);
+      const gid = gidMatch ? `&gid=${gidMatch[1]}` : ''; // 특정 시트 ID가 있으면 추가
+      return `https://docs.google.com/spreadsheets/d/${fileId}/export?format=csv${gid}`;
+    }
+
+    return null;
+  }
+
+  // Google Drive 링크로 CSV 로드
+  async function loadCSVFromGdrive() {
+    const link = $gdriveLink.value.trim();
+    if (!link) { setStatus('Google Drive 링크를 입력하세요.'); return; }
+    const downloadUrl = convertGoogleDriveLink(link);
+    if (!downloadUrl) { setStatus('유효하지 않은 Google Drive 링크 형식입니다.'); return; }
+    setStatus('Google Drive에서 파일 불러오는 중...');
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error(`네트워크 응답 실패: ${response.statusText}`);
+      const text = await response.text();
+      processAndStart(text, 'Google Drive');
+    } catch (error) {
+      setStatus(`링크 로딩 실패: ${error.message}. 공유 설정을 확인하세요.`);
+    }
   }
 
   // 이벤트
@@ -256,6 +304,7 @@
   $btnShuffle.addEventListener('click', shuffleRows);
   $btnRestart.addEventListener('click', restart);
   $screen.addEventListener('click', flipCard);
+  $loadGdrive.addEventListener('click', loadCSVFromGdrive);
   $btnBackToSetup.addEventListener('click', backToSetup);
   $btnToggleMeaning.addEventListener('click', () => {
     // 토글 상태를 변경하고, 현재 보고 있는 면을 재렌더링합니다.
@@ -307,6 +356,11 @@
   $drop.addEventListener('drop', (e) => {
     const file = e.dataTransfer.files && e.dataTransfer.files[0];
     if (file) loadCSVFile(file);
+  });
+
+  // Google Drive 링크 입력창에서 Enter 키로 로드
+  $gdriveLink.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); loadCSVFromGdrive(); }
   });
 
   // 초기 상태
