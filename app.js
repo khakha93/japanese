@@ -30,6 +30,7 @@
   const $btnPrev = document.getElementById('prev');
   const $btnNext = document.getElementById('next');
   const $btnFlip = document.getElementById('flip');
+  const $btnFlipReverse = document.getElementById('flip-reverse');
   const $btnShuffle = document.getElementById('shuffle');
   const $btnToggleMeaning = document.getElementById('toggleMeaning');
   const $btnRestart = document.getElementById('restart');
@@ -172,7 +173,7 @@
       // 이전 단어의 마지막 면으로 이동
       idx = (idx - 1 + rows.length) % rows.length;
       
-      // 스킵 조건 확인 (chi-to-ko 모드에서 의미 표시가 켜져 있으면 3번째 면 스킵)
+      // 스킵 조건 확인: chi-to-ko 모드에서 의미 표시가 켜져 있으면 3번째 면(단독 한글)은 건너뜁니다.
       if (showMeaning && studyMode === 'chi-to-ko') {
         flipState = 1;
         renderJP();
@@ -381,6 +382,7 @@
     if (e.shiftKey) flipCardReverse();
     else flipCard();
   });
+  if ($btnFlipReverse) $btnFlipReverse.addEventListener('click', flipCardReverse);
   $btnShuffle.addEventListener('click', shuffleRows);
   $btnRestart.addEventListener('click', restart);
   $screen.addEventListener('click', (e) => {
@@ -424,13 +426,10 @@
     // 학습 화면이 아닐 때는 단축키가 동작하지 않도록 막습니다.
     if ($mainScreen.classList.contains('hidden')) return;
 
-    if (e.key === 'ArrowRight') { e.preventDefault(); nextRow(); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); prevRow(); }
-    else if (e.key.toLowerCase() === 'f') { 
-      e.preventDefault(); 
-      if (e.shiftKey) flipCardReverse();
-      else flipCard(); 
-    }
+    if (e.key === 'ArrowRight') { e.preventDefault(); flipCard(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); flipCardReverse(); }
+    else if (e.key.toLowerCase() === 'f') { e.preventDefault(); prevRow(); }
+    else if (e.key.toLowerCase() === 'b') { e.preventDefault(); nextRow(); }
     else if (e.key.toLowerCase() === 'm') { e.preventDefault(); $btnToggleMeaning.click(); }
     else if (e.key.toLowerCase() === 'r') { e.preventDefault(); restart(); }
     else if (e.altKey && (e.key.toLowerCase() === 's')) { e.preventDefault(); $btnShuffle.click(); }

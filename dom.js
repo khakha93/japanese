@@ -11,6 +11,7 @@ export const $screen = document.getElementById('screen');
 export const $btnPrev = document.getElementById('prev');
 export const $btnNext = document.getElementById('next');
 export const $btnFlip = document.getElementById('flip');
+export const $btnFlipReverse = document.getElementById('flip-reverse');
 export const $btnShuffle = document.getElementById('shuffle');
 export const $btnToggleMeaning = document.getElementById('toggleMeaning');
 export const $btnRestart = document.getElementById('restart');
