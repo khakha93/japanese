@@ -165,6 +165,38 @@
     }
   }
 
+  function flipCardReverse() {
+    if (!rows.length) return;
+
+    if (flipState === 0) {
+      // 이전 단어의 마지막 면으로 이동
+      idx = (idx - 1 + rows.length) % rows.length;
+      
+      // 스킵 조건 확인 (chi-to-ko 모드에서 의미 표시가 켜져 있으면 3번째 면 스킵)
+      if (showMeaning && studyMode === 'chi-to-ko') {
+        flipState = 1;
+        renderJP();
+        setStatus('2번째 면');
+      } else {
+        flipState = 2;
+        if (studyMode === 'chi-to-ko') renderKO();
+        else renderCHI();
+        setStatus('3번째 면');
+      }
+    } else {
+      flipState--;
+      if (flipState === 1) {
+        renderJP();
+        setStatus('2번째 면');
+      } else {
+        if (studyMode === 'chi-to-ko') renderCHI();
+        else if (studyMode === 'roma-to-jp') renderKO();
+        else renderCHI();
+        setStatus('1번째 면');
+      }
+    }
+  }
+
   function nextRow(){
     if (!rows.length) return;
     idx = (idx + 1) % rows.length;
@@ -345,11 +377,16 @@
   });
   $btnNext.addEventListener('click', nextRow);
   $btnPrev.addEventListener('click', prevRow);
-  $btnFlip.addEventListener('click', flipCard);
+  $btnFlip.addEventListener('click', (e) => {
+    if (e.shiftKey) flipCardReverse();
+    else flipCard();
+  });
   $btnShuffle.addEventListener('click', shuffleRows);
   $btnRestart.addEventListener('click', restart);
-  $screen.addEventListener('click', flipCard);
-  $loadGdrive.addEventListener('click', loadCSVFromGdrive);
+  $screen.addEventListener('click', (e) => {
+    if (e.shiftKey) flipCardReverse();
+    else flipCard();
+  });
   $btnBackToSetup.addEventListener('click', backToSetup);
   $btnToggleMeaning.addEventListener('click', () => {
     // 토글 상태를 변경하고, 현재 보고 있는 면을 재렌더링합니다.
@@ -389,7 +426,11 @@
 
     if (e.key === 'ArrowRight') { e.preventDefault(); nextRow(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); prevRow(); }
-    else if (e.key.toLowerCase() === 'f') { e.preventDefault(); flipCard(); }
+    else if (e.key.toLowerCase() === 'f') { 
+      e.preventDefault(); 
+      if (e.shiftKey) flipCardReverse();
+      else flipCard(); 
+    }
     else if (e.key.toLowerCase() === 'm') { e.preventDefault(); $btnToggleMeaning.click(); }
     else if (e.key.toLowerCase() === 'r') { e.preventDefault(); restart(); }
     else if (e.altKey && (e.key.toLowerCase() === 's')) { e.preventDefault(); $btnShuffle.click(); }
