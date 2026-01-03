@@ -343,6 +343,7 @@
       const button = document.createElement('button');
       button.textContent = link.name;
       button.dataset.url = link.url;
+      button.style.margin = '2px';
 
       if (link.name.startsWith('명사')) {
         $presetLinksNouns.appendChild(button);
@@ -376,8 +377,8 @@
     $btnModeChiKo.classList.remove('selected');
     setStatus('모드 선택됨: 한국어 → 일본어');
   });
-  $btnNext.addEventListener('click', nextRow);
-  $btnPrev.addEventListener('click', prevRow);
+  if ($btnNext) $btnNext.addEventListener('click', nextRow);
+  if ($btnPrev) $btnPrev.addEventListener('click', prevRow);
   $btnFlip.addEventListener('click', (e) => {
     if (e.shiftKey) flipCardReverse();
     else flipCard();
